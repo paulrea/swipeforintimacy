@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Swipe for Intimacy</title>
+
+<style>
+:root{
+  --bg:#ffffff;
+  --card:#f8f9fb;
+  --card2:#eef1f6;
+  --text:#111111;
+  --muted:#6b7280;
+  --accent:#2563eb;
+  --border:#e5e7eb;
+  --shadow:0 8px 30px rgba(0,0,0,.08);
+  --radius:18px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  color:var(--text);
+  background:var(--bg);
+  min-height:100vh;
+}
+.shell{
+  width:min(560px,94vw);
+  margin:0 auto;
+  padding:24px 18px 60px;
+}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:12px;
+}
+.title{
+  font-weight:900;
+  font-size:22px;
+  letter-spacing:-0.3px;
+}
+.meta{
+  font-size:13px;
+  color:var(--muted);
+}
+.progress{
+  height:6px;
+  background:#f1f3f5;
+  border-radius:999px;
+  overflow:hidden;
+  margin-bottom:24px;
+  border:1px solid var(--border);
+}
+.progress>div{
+  height:100%;
+  width:0%;
+  background:var(--accent);
+  transition:width .2s ease;
+}
+
+/* Quiz card stage */
+.stage{position:relative;height:520px}
+.card{
+  position:absolute;
+  inset:0;
+  padding:22px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  user-select:none;
+  touch-action:pan-y;
+  transition:transform .18s ease;
+}
+.card.back{
+  transform:scale(.97) translateY(10px);
+  background:var(--card2);
+  opacity:.85;
+}
+.cardTop{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.pill{
+  font-size:12px;
+  color:var(--muted);
+  padding:6px 12px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#ffffff;
+}
+.prompt{
+  font-size:20px;
+  font-weight:900;
+  margin:18px 0;
+  line-height:1.3;
+}
+.options{display:grid;gap:12px}
+.opt{
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#ffffff;
+  font-weight:800;
+  text-align:left;
+  transition:all .15s ease;
+}
+.opt:hover{background:#f3f4f6}
+.opt.selected{
+  border-color:var(--accent);
+  background:#e8f0ff;
+}
+.hintRow{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:var(--muted);
+  margin-top:18px;
+}
+
+/* Results Page */
+.results{
+  display:grid;
+  gap:20px;
+}
+.results h2{
+  margin:0;
+  font-size:24px;
+  font-weight:900;
+}
+.answerItem{
+  border:1px solid var(--border);
+  background:#f9fafb;
+  border-radius:16px;
+  padding:16px;
+  display:grid;
+  gap:6px;
+}
+.qText{font-weight:900;font-size:14px}
+.aText{font-weight:800;font-size:14px}
+.aMuted{color:var(--muted)}
+.linkBox{
+  border:1px solid var(--border);
+  background:#f9fafb;
+  border-radius:16px;
+  padding:16px;
+  display:grid;
+  gap:12px;
+}
+.linkBox input{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#ffffff;
+  color:var(--text);
+  font-size:12px;
+}
+.btn{
+  appearance:none;
+  border:1px solid var(--border);
+  background:#ffffff;
+  color:var(--text);
+  padding:12px 16px;
+  border-radius:14px;
+  font-weight:800;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.btn:hover{background:#f3f4f6}
+.btnRow{display:flex;gap:12px;flex-wrap:wrap}
+a{color:var(--accent);text-decoration:none;font-weight:700}
+.categoryLabel{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color:var(--accent);
+  margin-bottom:6px;
+}
+</style>
+</head>
+
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="title">Swipe for Intimacy</div>
+    <div class="meta" id="meta"></div>
+  </div>
+  <div class="progress"><div id="progressFill"></div></div>
+  <div id="content"></div>
+</div>
+
+<script>
+/** Customize your questions here */
+const questions = [
+{ "id":"q1", "category":"Intimacy", "prompt":"Romance and affection" },
+{ "id":"q2", "category":"Intimacy", "prompt":"Hugging eachother" },
+{ "id":"q3", "category":"Intimacy", "prompt":"Kissing eachother's lips" },
+{ "id":"q4", "category":"Intimacy", "prompt":"Kissing eachother's body" },
+{ "id":"q5", "category":"Intimacy", "prompt":"Spooning together" },
+{ "id":"q6", "category":"Intimacy", "prompt":"Sleeping over together" },
+{ "id":"q7", "category":"Intimacy", "prompt":"Sex in the dark" },
+{ "id":"q8", "category":"Intimacy", "prompt":"Sex with lights on" },
+{ "id":"q9", "category":"Intimacy", "prompt":"Touching affectionately in public" },
+{ "id":"q10", "category":"Intimacy", "prompt":"Touching sexually in public" },
+{ "id":"q11", "category":"Intimacy", "prompt":"Teasing with my partner" },
+{ "id":"q12", "category":"Intimacy", "prompt":"Stripping with my partner" },
+{ "id":"q13", "category":"Intimacy", "prompt":"Watching porn together" },
+{ "id":"q14", "category":"Intimacy", "prompt":"Phone sex together" },
+{ "id":"q15", "category":"Intimacy", "prompt":"Role playing together" },
+{ "id":"q16", "category":"Intimacy", "prompt":"Cybersex together" },
+{ "id":"q17", "category":"Intimacy", "prompt":"Sexting together" },
+{ "id":"q18", "category":"Lingerie & Apparel", "prompt":"Me dressing in lingerie" },
+{ "id":"q19", "category":"Lingerie & Apparel", "prompt":"Partner dressing in lingerie" },
+{ "id":"q20", "category":"Lingerie & Apparel", "prompt":"Me dressing in stockings" },
+{ "id":"q21", "category":"Lingerie & Apparel", "prompt":"Partner dressing in stockings" },
+{ "id":"q22", "category":"Lingerie & Apparel", "prompt":"Me dressing in leather" },
+{ "id":"q23", "category":"Lingerie & Apparel", "prompt":"Partner dressing in leather" },
+{ "id":"q24", "category":"Lingerie & Apparel", "prompt":"Me dressing in cosplay" },
+{ "id":"q25", "category":"Lingerie & Apparel", "prompt":"Partner dressing in cosplay" },
+{ "id":"q26", "category":"Group Intimacy", "prompt":"Being intimate together" },
+{ "id":"q27", "category":"Group Intimacy", "prompt":"Being intimate together + 1 Male" },
+{ "id":"q28", "category":"Group Intimacy", "prompt":"Being intimate together + 1 Female" },
+{ "id":"q29", "category":"Group Intimacy", "prompt":"Being intimate together + a couple" },
+{ "id":"q30", "category":"Group Intimacy", "prompt":"Being intimate with a larger group" },
+{ "id":"q31", "category":"Sex Acts", "prompt":"Mutual masturbation" },
+{ "id":"q32", "category":"Sex Acts", "prompt":"Giving blowjobs" },
+{ "id":"q33", "category":"Sex Acts", "prompt":"Receiving blowjobs" },
+{ "id":"q34", "category":"Sex Acts", "prompt":"Cum on my face" },
+{ "id":"q35", "category":"Sex Acts", "prompt":"Cumming on face" },
+{ "id":"q36", "category":"Sex Acts", "prompt":"Cum on my body" },
+{ "id":"q37", "category":"Sex Acts", "prompt":"Cumming on body" },
+{ "id":"q38", "category":"Sex Acts", "prompt":"Swallowing cum" },
+{ "id":"q39", "category":"Sex Acts", "prompt":"I like sucking/licking breasts" },
+{ "id":"q40", "category":"Sex Acts", "prompt":"I like having my breasts sucked/licked" },
+{ "id":"q41", "category":"Sex Acts", "prompt":"Giving Cunnilingus" },
+{ "id":"q42", "category":"Sex Acts", "prompt":"Receiving Cunnilingus" },
+{ "id":"q43", "category":"Penetration", "prompt":"Penetration with partner" },
+{ "id":"q44", "category":"Penetration", "prompt":"Strap-on with partner" },
+{ "id":"q45", "category":"Penetration", "prompt":"Barebacking with partner" },
+{ "id":"q46", "category":"Penetration", "prompt":"Handjob/fingering" },
+{ "id":"q47", "category":"Penetration", "prompt":"Anal sex" },
+{ "id":"q48", "category":"Toys", "prompt":"Dildos" },
+{ "id":"q49", "category":"Toys", "prompt":"Plugs" },
+{ "id":"q50", "category":"Toys", "prompt":"Vibrators" },
+{ "id":"q51", "category":"Toys", "prompt":"Sex Machines" },
+{ "id":"q52", "category":"Positions", "prompt":"Sex against the wall" },
+{ "id":"q53", "category":"Positions", "prompt":"69ing" },
+{ "id":"q54", "category":"Positions", "prompt":"Missionary" },
+{ "id":"q55", "category":"Positions", "prompt":"Doggy Style" },
+{ "id":"q56", "category":"Positions", "prompt":"Changing positions" },
+{ "id":"q57", "category":"Restrictive", "prompt":"Wearing or using collars" },
+{ "id":"q58", "category":"Restrictive", "prompt":"Shibori rope bondage" },
+{ "id":"q59", "category":"Restrictive", "prompt":"Wearing or using blindfolds" },
+{ "id":"q60", "category":"Restrictive", "prompt":"Being tied or tying up your partner" },
+{ "id":"q61", "category":"Scenarios", "prompt":"Exhibitionism" },
+{ "id":"q62", "category":"Scenarios", "prompt":"Voyeurism" },
+{ "id":"q63", "category":"Scenarios", "prompt":"Freeuse" },
+{ "id":"q64", "category":"Scenarios", "prompt":"Dominating or being dominated" },
+{ "id":"q65", "category":"Scenarios", "prompt":"Submissive or being submissive" },
+{ "id":"q66", "category":"Scenarios", "prompt":"Orgasm control" },
+{ "id":"q67", "category":"Touch Stimulation", "prompt":"Cock/Pussy worship" },
+{ "id":"q68", "category":"Touch Stimulation", "prompt":"Tickling" },
+{ "id":"q69", "category":"Touch Stimulation", "prompt":"Massage" },
+{ "id":"q70", "category":"Touch Stimulation", "prompt":"Sensation Play" },
+{ "id":"q71", "category":"Pain", "prompt":"Light Pain" },
+{ "id":"q72", "category":"Pain", "prompt":"Nipple Clamps" },
+{ "id":"q73", "category":"Pain", "prompt":"Body Slapping" },
+{ "id":"q74", "category":"Pain", "prompt":"Facial Slapping" },
+{ "id":"q75", "category":"Pain", "prompt":"Spanking" },
+{ "id":"q76", "category":"Pain", "prompt":"Whips" },
+{ "id":"q77", "category":"Pain", "prompt":"Paddles" },
+{ "id":"q78", "category":"Pain", "prompt":"Hot Wax" },
+{ "id":"q79", "category":"Pain", "prompt":"Scratching" },
+{ "id":"q80", "category":"Pain", "prompt":"Biting Light biting" },
+{ "id":"q81", "category":"Body Parts", "prompt":"The word Cock" },
+{ "id":"q82", "category":"Body Parts", "prompt":"The word Dick" },
+{ "id":"q83", "category":"Body Parts", "prompt":"The word Prick" },
+{ "id":"q84", "category":"Body Parts", "prompt":"The word Penis" },
+{ "id":"q85", "category":"Body Parts", "prompt":"The word Vagina" },
+{ "id":"q86", "category":"Body Parts", "prompt":"The word Cunt" },
+{ "id":"q87", "category":"Body Parts", "prompt":"The word Slit" },
+{ "id":"q88", "category":"Body Parts", "prompt":"The word Mound" },
+{ "id":"q89", "category":"Body Parts", "prompt":"The word Pussy" },
+{ "id":"q90", "category":"Body Parts", "prompt":"The word Breasts" },
+{ "id":"q91", "category":"Body Parts", "prompt":"The word Boobs" },
+];
+
+/** Same choices for every card */
+const UNIVERSAL_CHOICES = ["🔥 Love it", "🟢 Like It", "🟡 Interested", "🔴 No Thank You"];
+
+const SWIPE_THRESHOLD = 120;
+const EXIT_DISTANCE = 520;
+const EXIT_MS = 160;
+
+let idx = 0;
+let animLock = false;
+const responses = {}; // { [id]: string }
+let loadedFromShare = false;
+
+const content = document.getElementById("content");
+const meta = document.getElementById("meta");
+const progressFill = document.getElementById("progressFill");
+
+function setMeta(){
+  const answered = Object.keys(responses).length;
+  meta.textContent = `${answered}/${questions.length} answered`;
+  progressFill.style.width = `${(answered/questions.length)*100}%`;
+}
+
+function render(){
+  setMeta();
+  content.innerHTML = "";
+
+  if (idx >= questions.length) {
+    renderResults();
+    return;
+  }
+
+  const stage = document.createElement("div");
+  stage.className = "stage";
+
+  if (idx + 1 < questions.length) stage.appendChild(makeCard(questions[idx+1], idx+1, true));
+  stage.appendChild(makeCard(questions[idx], idx, false));
+
+  content.appendChild(stage);
+}
+
+function renderResults(){
+  const wrapper = document.createElement("div");
+  wrapper.className = "results";
+
+  const shareUrl = buildShareUrl();
+
+  wrapper.innerHTML = `
+    <h2>Your Answers</h2>
+    <div style="font-size:13px;color:var(--muted)">
+      ${loadedFromShare ? "Loaded from your saved link." : "Review your picks, then edit if you want."}
+    </div>
+
+    ${questions.map((q,i)=>{
+      const ans = responses[q.id];
+      return `
+        <div class="answerItem">
+          <div class="qText">${i+1}. ${escapeHtml(q.prompt)}</div>
+          <div class="${ans ? 'aText' : 'aText aMuted'}">${ans ? escapeHtml(ans) : "(no answer)"}</div>
+        </div>
+      `;
+    }).join("")}
+
+    <div class="linkBox">
+      <div style="font-weight:900;">Resume / Edit Link</div>
+      <div style="font-size:13px;color:var(--muted)">
+        Save this link to come back later and edit your answers.
+      </div>
+      <input id="shareInput" value="${escapeHtml(shareUrl)}" readonly />
+      <div class="btnRow">
+        <button class="btn" id="copyBtn">Copy Link</button>
+        <a class="btn" href="${escapeHtml(shareUrl)}">Open Link</a>
+      </div>
+    </div>
+
+    <div class="btnRow">
+      <button class="btn" id="editBtn">Edit Answers</button>
+      <button class="btn" id="restartBtn">Restart</button>
+    </div>
+  `;
+
+  content.appendChild(wrapper);
+
+  document.getElementById("copyBtn").onclick = async () => {
+    const input = document.getElementById("shareInput");
+    try {
+      await navigator.clipboard.writeText(input.value);
+      if (navigator.vibrate) navigator.vibrate(15);
+    } catch {
+      input.focus(); input.select();
+    }
+  };
+
+  document.getElementById("editBtn").onclick = () => {
+    // Go to first unanswered; if all answered, go to last question
+    const firstUnanswered = questions.findIndex(q => !responses[q.id]);
+    idx = (firstUnanswered === -1) ? (questions.length - 1) : firstUnanswered;
+    loadedFromShare = false;
+    render();
+  };
+
+  document.getElementById("restartBtn").onclick = restart;
+}
+
+function makeCard(q, qIndex, isBack){
+  const card = document.createElement("div");
+  card.className = "card" + (isBack ? " back" : "");
+
+  const saved = responses[q.id];
+
+  card.innerHTML = `
+    <div class="cardTop">
+      <div class="pill">${qIndex+1}/${questions.length}</div>
+      ${!isBack ? `<div class="pill" style="border-color:transparent;background:transparent;color:var(--muted);padding:6px 0;">Tap then swipe</div>` : `<span></span>`}
+    </div>
+	<div class="categoryLabel">${escapeHtml(q.category)}</div>
+	<div class="prompt">${escapeHtml(q.prompt)}</div>
+    <div class="options"></div>
+    ${!isBack ? `
+      <div class="hintRow">
+        <div>Swipe left to go back</div>
+        <div>Swipe right to submit</div>
+      </div>
+    ` : ``}
+  `;
+
+  const opts = card.querySelector(".options");
+
+  UNIVERSAL_CHOICES.forEach(opt=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "opt" + (saved === opt ? " selected" : "");
+    b.textContent = opt;
+
+    // prevent card swipe handler from stealing gestures
+    b.addEventListener("pointerdown", e => e.stopPropagation());
+    b.addEventListener("touchstart", e => e.stopPropagation(), { passive:true });
+
+    b.onclick = () => {
+      responses[q.id] = opt;
+      [...opts.children].forEach(el => el.classList.remove("selected"));
+      b.classList.add("selected");
+      setMeta();
+      if (navigator.vibrate) navigator.vibrate(10);
+    };
+
+    opts.appendChild(b);
+  });
+
+  if (!isBack) attachSwipe(card, q);
+  return card;
+}
+
+function attachSwipe(card, q){
+  let startX = 0;
+  let startY = 0;
+  let dx = 0;
+  let dy = 0;
+  let dragging = false;
+  let pointerId = null;
+  let locked = null; // decide horizontal vs vertical
+
+  function setTransform(x){
+    card.style.transform = `translateX(${x}px) rotate(${x/20}deg)`;
+  }
+
+  function reset(){
+    card.style.transition = "transform .18s ease";
+    setTransform(0);
+    dx = 0; dy = 0; locked = null;
+  }
+
+  function exitThen(dir, fn){
+    animLock = true;
+    card.style.transition = "transform .14s ease";
+    setTransform(dir * EXIT_DISTANCE);
+    setTimeout(() => {
+      animLock = false;
+      fn();
+    }, EXIT_MS);
+  }
+
+  card.addEventListener("pointerdown", e => {
+    if (animLock) return;
+    if (e.target.closest("button, a, input, textarea, select, label")) return;
+
+    dragging = true;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    dx = 0; dy = 0; locked = null;
+
+    card.style.transition = "none";
+    card.setPointerCapture(pointerId);
+  });
+
+  card.addEventListener("pointermove", e => {
+    if (!dragging || e.pointerId !== pointerId) return;
+
+    dx = e.clientX - startX;
+    dy = e.clientY - startY;
+
+    if (locked === null) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) locked = false;
+      else if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) locked = true;
+      else return;
+    }
+    if (!locked) return;
+    setTransform(dx);
+  });
+
+  function end(){
+    if (!dragging) return;
+    dragging = false;
+
+    if (locked !== true) { reset(); return; }
+
+    if (dx > SWIPE_THRESHOLD) {
+      if (!responses[q.id]) { reset(); return; } // require a selection
+      exitThen(+1, () => { idx++; render(); });
+    } else if (dx < -SWIPE_THRESHOLD) {
+      if (idx === 0) { reset(); return; }
+      exitThen(-1, () => { idx--; render(); });
+    } else {
+      reset();
+    }
+  }
+
+  card.addEventListener("pointerup", end);
+  card.addEventListener("pointercancel", () => { dragging=false; reset(); });
+  card.addEventListener("lostpointercapture", end);
+}
+
+function restart(){
+  idx = 0;
+  Object.keys(responses).forEach(k => delete responses[k]);
+  loadedFromShare = false;
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("s");
+  window.history.replaceState(null, "", url.toString());
+
+  render();
+}
+
+// Share link (base64url JSON)
+function buildShareUrl(){
+  const payload = { v:1, responses };
+  const token = base64urlEncode(JSON.stringify(payload));
+  const url = new URL(window.location.href);
+  url.searchParams.set("s", token);
+  return url.toString();
+}
+
+function tryLoadFromShare(){
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("s");
+  if (!token) return;
+
+  try{
+    const payload = JSON.parse(base64urlDecode(token));
+    if (!payload || payload.v !== 1 || typeof payload.responses !== "object") return;
+
+    // only accept known questions + valid options
+    for (const q of questions) {
+      const val = payload.responses[q.id];
+      if (typeof val === "string" && UNIVERSAL_CHOICES.includes(val)) {
+        responses[q.id] = val;
+      }
+    }
+
+    loadedFromShare = true;
+
+    const firstUnanswered = questions.findIndex(q => !responses[q.id]);
+    idx = (firstUnanswered === -1) ? questions.length : firstUnanswered;
+
+  } catch {
+    // ignore bad tokens
+  }
+}
+
+function base64urlEncode(str){
+  const b64 = btoa(unescape(encodeURIComponent(str)));
+  return b64.replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
+}
+function base64urlDecode(token){
+  let b64 = token.replaceAll("-","+").replaceAll("_","/");
+  while (b64.length % 4) b64 += "=";
+  return decodeURIComponent(escape(atob(b64)));
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+tryLoadFromShare();
+render();
+</script>
+</body>
+</html>
