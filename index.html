@@ -181,13 +181,24 @@ a{color:var(--accent);text-decoration:none;font-weight:700}
   color:var(--accent);
   margin-bottom:6px;
 }
+.titleLink{
+  text-decoration:none;
+  color:inherit;
+  display:inline-block;
+}
+
+.titleLink:hover{
+  opacity:0.8;
+}
 </style>
 </head>
 
 <body>
 <div class="shell">
   <div class="topbar">
-    <div class="title">Swipe for Intimacy</div>
+    <a href="./" class="titleLink">
+  		<div class="title">Swipe for Intimacy</div>
+	</a>
     <div class="meta" id="meta"></div>
   </div>
   <div class="progress"><div id="progressFill"></div></div>
